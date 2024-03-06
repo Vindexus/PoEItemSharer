@@ -1,0 +1,16 @@
+{
+  "private": true,
+  "workspaces": {
+    "packages": [
+      "apps/*",
+      "lib/*"
+    ]
+  },
+  "scripts": {
+    "cli": "yarn workspace @monorepo/cli",
+    "consts": "yarn workspace @monorepo/consts",
+    "ui": "yarn workspace @monorepo/ui",
+    "react": "yarn workspace @monorepo/react",
+    "api": "yarn workspace @monorepo/api"
+  }
+}

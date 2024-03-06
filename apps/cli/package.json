@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "type": "module",
+  "name": "@monorepo/cli",
+  "scripts": {
+    "start": "npx tsx hello.ts",
+    "v": "npx tsx --version"
+  },
+  "devDependencies": {
+    "tsx": "^4.7.1"
+  }
+}

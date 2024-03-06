@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "lib": ["ES2020", "ES2021.String", "dom"],
+    "esModuleInterop": true,
+    "allowJs": true,
+    "allowSyntheticDefaultImports": true,
+    "moduleResolution": "node",
+    "module": "ES2020",
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "isolatedModules": false,
+    "declaration": true,
+    "baseUrl": "./",
+    "paths": {
+      "@monorepo/consts/*": ["./lib/consts/*"],
+      "@monorepo/ui/*": ["./lib/ui/*"]
+    }
+  },
+  "exclude": []
+}
