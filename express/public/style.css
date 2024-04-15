@@ -1,0 +1,291 @@
+* {
+    box-sizing: border-box;
+}
+/* http://meyerweb.com/eric/tools/css/reset/
+   v2.0 | 20110126
+   License: none (public domain)
+*/
+
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed,
+figure, figcaption, footer, header, hgroup,
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-size: 100%;
+    font: inherit;
+    vertical-align: baseline;
+}
+/* HTML5 display-role reset for older browsers */
+article, aside, details, figcaption, figure,
+footer, header, hgroup, menu, nav, section {
+    display: block;
+}
+body {
+    line-height: 1;
+}
+ol, ul {
+    list-style: none;
+}
+blockquote, q {
+    quotes: none;
+}
+blockquote:before, blockquote:after,
+q:before, q:after {
+    content: '';
+    content: none;
+}
+table {
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+@font-face { font-family: fontin; src: url('/fontin.woff2'); }
+
+
+body {
+    background: black;
+}
+
+div.listing {
+    font-family: fontin;
+    text-align: center;
+    color: #7f7f7f;
+    background: black;
+    font-size: 14px;
+    line-height: 14px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: min-content;
+}
+
+.posted-by {
+    width: 100%;
+    white-space: nowrap;
+    text-align: left;
+    padding: 8px 10px;
+}
+
+.posted-by .account-name {
+    color: white;
+}
+
+div.item {
+    display: flex;
+    flex-direction: row;
+    padding: 10px;
+    border: 1px solid black;
+    min-width: 437px;
+
+    width: min-content;
+    align-items: center;
+}
+
+div.item aside {
+    flex: 0 0 128px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+div.item figure {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: url('/item_box.png') center center no-repeat;
+    height: 229px;
+    width: 128px;
+    position: relative;
+}
+
+div.item .sockets {
+    font-size: 18px;
+    margin-top: 10px;
+}
+
+.sockets .link-count {
+    font-size: 14px;
+    color: #f7f7f7;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.sockets .B {
+    color: #3f5dcf;
+}
+
+.sockets .R {
+    color: #c7273e;
+}
+
+.sockets .G {
+    color: #8dc30f;
+}
+
+.sockets .W {
+    color: white;
+}
+
+.sockets .group {
+    margin: 0 4px;
+}
+
+.sockets .group:before  {
+    content: "["
+}
+
+.sockets .group:after  {
+    content: "]"
+}
+
+div.item main {
+    flex: 1;
+}
+
+div.item main section div {
+    padding: 2px 10px;
+}
+
+.icons {
+    position: absolute;
+    width: 80%;
+    height: 27px;
+    top: 12px;
+    display: flex;
+    justify-content: end;
+}
+
+.icons.num-1 {
+}
+
+.icons > div {
+    width: 27px;
+    height: 27px;
+}
+
+.icons > div.shaper {
+    background-image: url('/shaper-symbol.png')
+}
+.icons > div.elder {
+    background-image: url('/elder-symbol.png')
+}
+.icons > div.veiled {
+    background-image: url('/veiled-symbol.png')
+}
+.icons > div.fractured {
+    background-image: url('/fractured-symbol.png')
+}
+.icons > div.crusader {
+    background-image: url('/crusader-symbol.png')
+}
+.icons > div.hunter {
+    background-image: url('/hunter-symbol.png')
+}
+.icons > div.redeemer {
+    background-image: url('/redeemer-symbol.png')
+}
+.icons > div.warlord {
+    background-image: url('/warlord-symbol.png')
+}
+.icons > div.eater {
+    background-image: url('/eater-symbol.png')
+}
+.icons > div.searing {
+    background-image: url('/searing-symbol.png')
+}
+.icons > div.synthesised {
+    background-image: url('/synthesised-symbol.png')
+}
+
+section > div {
+    white-space: nowrap;
+}
+
+.mod {
+    color: #8787fe;
+}
+
+.mod.fractured {
+    color: #a29162;
+}
+
+.mod.enchant,
+.mod.crafted,
+.prop.blue-value .value {
+    color: #b4b4ff;
+}
+
+.separator {
+    height: 2px;
+    margin: 5px 0;
+    background: url(data:image/png;base64,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) top -4px center no-repeat;
+    padding: 0px !important;
+}
+
+.prop label {
+}
+
+.at-20-qual {
+    margin-left: 10px;
+}
+
+.prop .value {
+    color: white;
+}
+
+.header > div {
+    font-size: 16px;
+}
+
+.rare .header {
+    color: #fefe76;
+}
+
+.unique .header {
+    color: #af6025;
+}
+
+.normal .header {
+    color: #c8c8c8;
+}
+
+.magic .header {
+    color: #88f;
+}
+
+.actions {
+    padding: 10px;
+}
+
+.actions a {
+    color: honeydew;
+    font-family: sans-serif;
+}
+
+.unidentified, .corrupted {
+    color: #d20000;
+}
+
+.corrupted.krangled {
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 16px;
+    font-family: "Comic Sans MS"
+}
+
+strong {
+    font-weight: bold;
+}
