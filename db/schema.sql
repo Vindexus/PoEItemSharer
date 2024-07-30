@@ -6,5 +6,6 @@ CREATE TABLE items (
     listing_json TEXT,
     date_added TEXT,
     has_image INTEGER,
-    messaged_at TEXT
+    messaged_at TEXT,
+    dont_message INTEGER
 );

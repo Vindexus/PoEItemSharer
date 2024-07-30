@@ -8,13 +8,53 @@ dotenv.config({
 })
 
 export type Config = {
+	// Where the Express server runs
 	PORT: number
+
+	// The IDs of discord channels you want the bot to post to.
 	DISCORD_CHANNELS: string[]
+
+	// Your personal accounts session ID. Required to fetch items from a private server.
 	POESESSID: string
+
+	// GGG asks that you set one of these for your bots
 	USER_AGENT: string
-	LEAGUE: string // Standard, Chance%20To%20Unresist%20Poison%20(PL46381)
+
+
+	// Your league name as it appears in the URL when you use the trade site
+	// EG "Standard", "Chance%20To%20Unresist%20Poison%20(PC1337)"
+	LEAGUE: string
+
+	// Where the sqlite database file is
 	DATABASE_FILE: string
+
+	// Needed for your bot to post things
 	DISCORD_TOKEN?: string
+
+	// How long between iterations that look for new items in the db that do not have
+	// images generated yet
+	GENERATE_IMAGES_DELAY_MS: number
+
+	// How long between iterations of checking the trade API for new items
+	FETCH_ITEMS_DELAY_MS: number
+
+	// How long to wait between trying to fetch the guild stash again
+	FETCH_GUILD_STASH_DELAY_MS: number
+
+	// How much longer to wait if no items are inserted. This is cummulative.
+	FETCH_GUILD_STASH_DELAY_INCREMENT_MS: number
+
+	// Never wait longer than this
+	FETCH_GUILD_STASH_DELAY_MAX_MS: number
+
+	FETCH_GUILD_ACCOUNT_NAME: string
+	FETCH_GUILD_STASH_TAB_NAMES: string[]
+	FETCH_GUILD_REALM: 'pc'
+
+
+	// How long between iterations of the code that checks for new images to share
+	// to discord
+	DISCORD_MESSAGE_DELAY_MS: number
 }
 
 type ValidationOpts = {
@@ -94,13 +134,25 @@ export function getConfigFromSource (source: Record<string, string>) : Config {
 		return source[name] as string
 	}
 
-
 	function loadStringArray (name: string, opts?: ValidationOpts) : string[] {
 		if (!validate(name, opts)) {
 			return []
 		}
 
 		return source[name] ? source[name]!.split(',') : []
+	}
+
+	function loadIntArray (name: string, opts?: ValidationOpts) : number[] {
+		if (!validate(name, opts)) {
+			return []
+		}
+
+		const src = source[name]
+		if (!src) {
+			return []
+		}
+
+		return source[name] ? source[name]!.split(',').map(parseInt) : []
 	}
 
 	function loadInt (name: string, opts?: ValidationOpts, defaultValue?: number) : number {
@@ -123,9 +175,13 @@ export function getConfigFromSource (source: Record<string, string>) : Config {
 		return parsed
 	}
 
-	function loadEnum<T extends string> (name: string, valid: T[]) : T {
+	function loadEnum<T extends string> (name: string, valid: T[], defaultValue?: T) : T {
 		const src = source[name]
 		if (!src) {
+			if (defaultValue) {
+				return defaultValue
+			}
+
 			errors.push(`Missing value for ${name}. Valid options: ${valid.join(' or ')}`)
 			return '' as unknown as T
 		}
@@ -155,14 +211,36 @@ export function getConfigFromSource (source: Record<string, string>) : Config {
 		}
 	}
 
+	function loadDelayMS (name: string, defaultValue = 5000) {
+		const val = loadInt(name, {}, defaultValue)
+		if (val < 50) {
+			errors.push(`Times must be at least 50ms. ${name} is ${val}.`)
+		}
+		return val
+	}
+
 	const cfg : Config = {
-		PORT: loadInt('PORT', {}, 3000),
+		PORT: loadInt('PORT', {}, 3117),
 		POESESSID: loadRequiredString('POESESSID'),
 		LEAGUE: loadString('LEAGUE', {}, 'Standard'),
 		DISCORD_CHANNELS: loadString('DISCORD_CHANNELS', {}, '').split(','),
 		DISCORD_TOKEN: loadString('DISCORD_TOKEN'),
 		USER_AGENT: loadRequiredString('USER_AGENT'),
-		DATABASE_FILE: loadString('DATABASE_FILE', {}, 'db.sqlite')
+		DATABASE_FILE: loadString('DATABASE_FILE', {}, 'db.sqlite'),
+		FETCH_ITEMS_DELAY_MS: loadDelayMS('FETCH_ITEMS_DELAY_MS'),
+		GENERATE_IMAGES_DELAY_MS: loadDelayMS('GENERATE_IMAGES_DELAY_MS'),
+		DISCORD_MESSAGE_DELAY_MS: loadDelayMS('DISCORD_MESSAGE_DELAY_MS'),
+
+		FETCH_GUILD_ACCOUNT_NAME: loadRequiredString('FETCH_GUILD_ACCOUNT_NAME'),
+		FETCH_GUILD_STASH_TAB_NAMES: loadStringArray('FETCH_GUILD_STASH_TAB_NAMES').map(x => x.toLowerCase()),
+		FETCH_GUILD_REALM: loadEnum('FETCH_GUILD_REALM', ['pc'], 'pc'), // TODO: Add the other realms if you want console
+		FETCH_GUILD_STASH_DELAY_MS: loadDelayMS('FETCH_GUILD_STASH_DELAY_MS', 15000),
+		FETCH_GUILD_STASH_DELAY_INCREMENT_MS: loadDelayMS('FETCH_GUILD_STASH_DELAY_INCREMENT_MS', 5000),
+		FETCH_GUILD_STASH_DELAY_MAX_MS: loadDelayMS('FETCH_GUILD_STASH_DELAY_INCREMENT_MS', 1000 * 60 * 30),
+	}
+
+	if (cfg.FETCH_GUILD_STASH_TAB_NAMES.length === 0) {
+		errors.push('No tab names provided for the guild stash')
 	}
 
 	if (errors.length > 0) {

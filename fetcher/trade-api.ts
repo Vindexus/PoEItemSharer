@@ -1,9 +1,9 @@
 import axios from 'axios'
 import config from '../config'
-import {TradeListing, TradeQuery} from "../types/types";
+import {GuildStashTab, Item, TradeListing, TradeQuery} from "../types/types";
 
 const api = axios.create({
-	baseURL: 'https://www.pathofexile.com/api/trade',
+	baseURL: 'https://www.pathofexile.com/',
 	headers: {
 		cookie: 'POESESSID=' + config.POESESSID,
 		"User-Agent": config.USER_AGENT,
@@ -50,7 +50,7 @@ export async function fetch (query: string, results: string[]) : Promise<FetchRe
 		if (items.length === 0) {
 			return []
 		}
-		const res = await api.get('/fetch/' + items.join(',') + '?query=' + query)
+		const res = await api.get('/api/trade/fetch/' + items.join(',') + '?query=' + query)
 		start += perPage
 		return res.data.result as TradeListing[]
 	}
@@ -65,4 +65,25 @@ export async function getListings (league: string, query: TradeQuery) : Promise<
 	const result = await search(league, query)
 	const result2 = await fetch(result.id, result.result)
 	return result2
+}
+
+export type GetGuildStashOpts = {
+	accountName: string,
+	realm: 'pc' | 'console',
+	tabIndex: number
+	league: string
+}
+export async function getGuildStashTabItems (opts: GetGuildStashOpts): Promise<Item[]> {
+	const res = await getGuildStashTab(opts)
+	return res.items
+}
+
+export async function getGuildStashTab (opts: GetGuildStashOpts): Promise<{
+	items: Item[]
+	tabs: GuildStashTab[]
+}> {
+	const url = `/character-window/get-guild-stash-items?accountName=${opts.accountName}&tabs=1&realm=${opts.realm}&tabIndex=${opts.tabIndex}&league=${opts.league}`
+	console.log('url', url)
+	const res = await api.get(url)
+	return res.data
 }

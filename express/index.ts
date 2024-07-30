@@ -1,12 +1,24 @@
 import express, {Express, Request, Response} from "express";
 import path from 'path'
 import config from "../config";
-import {getTradeListing, query} from '../db/db'
+import {getItem, query} from '../db/db'
 import {inspect} from 'util'
 import {Property, PropertyValue} from "../types/types";
 
 const app: Express = express();
 const port = config.PORT;
+
+const HEAD = (title: string) => `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>${title}</title>
+    <link rel="stylesheet" href="/style.css">
+  </head>
+  <body>`
+const FOOTER = `</body></html>`
 
 app.use(express.static(path.join(__dirname, 'public')))
 
@@ -61,9 +73,39 @@ function renderLabelValue (label: string, value: string | number, opts :RenderLa
 	return `<span class="prop ${opts.blueValue ? ' blue-value' : ''}">${pieces.join('\n')}</span>`
 }
 
-app.get("/item/:itemId", async (req: Request, res: Response) => {
+function newHandler (fn: (req: Request, res: Response) => Promise<any>){
+	return async (req: Request, res: Response) => {
+		try {
+			await fn(req, res)
+		}
+		catch (ex) {
+			console.error(ex)
+			res.status(500).send(ex.toString())
+		}
+	}
+}
+
+app.get('/items', newHandler(async (req: Request, res: Response) => {
+	const items = await query<{id: string, date_added: string, item_json: string}[]>(`SELECT id, item_json, date_added FROM items ORDER BY date_added DESC LIMIT 100`)
+	res.send(HEAD('ITEMS') + items.map((item) => {
+		const itemInfo = item.item_json ? JSON.parse(item.item_json) : {}
+		const name = itemInfo.name || ''
+		const typeLine = itemInfo.typeLine || ''
+
+		console.log('items.length', items.length)
+		return `<div style="color: white;">
+
+<a href="/item/${item.id}">
+	${name} ${typeLine} @ ${item.date_added}
+</a>
+<div style="font-size: 10px;">${item.item_json}</div>
+</div>`
+	}) + FOOTER)
+}))
+
+app.get("/item/:itemId", newHandler(async (req: Request, res: Response) => {
 	const itemId = req.params.itemId
-	const listing = await getTradeListing(itemId)
+	const listing = await getItem(itemId)
 	console.log('listing', inspect(listing, {showHidden: false, depth: null, colors: true}))
 
 	if (!listing) {
@@ -108,7 +150,7 @@ app.get("/item/:itemId", async (req: Request, res: Response) => {
 	function getDefenseLine (label: string, value: number|string, valueAt20: number|string, aug: boolean) {
 		return renderLabelValue(label, value, {
 			blueValue: aug
-		}) + (value != valueAt20 ? ('<span class="at-20-qual">(' + renderLabelValue('20% Qual:', valueAt20, {
+		}) + (value != valueAt20 && valueAt20 ? ('<span class="at-20-qual">(' + renderLabelValue('20% Qual:', valueAt20, {
 			blueValue: aug,
 		}) + ')</span>') : '')
 	}
@@ -135,15 +177,15 @@ app.get("/item/:itemId", async (req: Request, res: Response) => {
 			}
 			else {
 				if (label === 'Armour') {
-					lines.push(getDefenseLine(label, val, item.extended.ar, item.extended.ar_aug))
+					lines.push(getDefenseLine(label, val, item.extended?.ar, item.extended?.ar_aug))
 					return
 				}
 				else if (label === 'Evasion Rating') {
-					lines.push(getDefenseLine(label, val, item.extended.ev, item.extended.ev_aug))
+					lines.push(getDefenseLine(label, val, item.extended?.ev, item.extended?.ev_aug))
 					return
 				}
 				else if (label === 'Energy Shield') {
-					lines.push(getDefenseLine(label, val, item.extended.es, item.extended.es_aug))
+					lines.push(getDefenseLine(label, val, item.extended?.es, item.extended?.es_aug))
 					return
 				}
 				lines.push(renderLabelValue(label, val))
@@ -338,16 +380,7 @@ app.get("/item/:itemId", async (req: Request, res: Response) => {
 		icons.push(`<div class="fractured"></div>`)
 	}
 
-	let html = `<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Viewing Item ${itemId}</title>
-    <link rel="stylesheet" href="/style.css">
-  </head>
-  <body>
+	let html = HEAD(`Viewing Item ${itemId}`) + `
     <div class="listing ${classes.join(' ')}">
     	<div class="item">
 				<aside>
@@ -361,22 +394,32 @@ app.get("/item/:itemId", async (req: Request, res: Response) => {
 					${sections.join('<div class="separator"></div>').split('+').join('<strong>+</strong>')}
 				</main>
 			</div>
-			<div class="posted-by">
-				Posted by <span class="account-name">${listing.listing.account.name}</span> @ ${new Date(listing.listing.indexed).toISOString()}
-			</div>
+			${listing.listing && listing.listing.account ? `
+				<div class="posted-by">
+					Posted by <span class="account-name">${listing.listing?.account?.name}</span> @ ${new Date(listing.listing?.indexed || Date.now()).toISOString()}
+				</div>
+			` : ''}
     </div>
     
     <div class="actions">
 			<a href="/random">random item</a>
 			${listing.messaged_at ? `<a href="/images/items/${listing.id}.png">view image</a>` : '[no image]'}    
-		</div>
-  </body>
-</html>`
+		</div>` + FOOTER
 	res.send(html)
-});
+}));
 
 app.get('/random', async (_req: Request, res: Response) => {
 	const rand = await query<{id: string}[]>(`SELECT id FROM items ORDER BY RANDOM() LIMIT 1`)
+	if (!rand[0]) {
+		res.send(';(')
+		return
+	}
+
+	res.redirect(`/item/${rand[0].id}`)
+})
+app.get('/latest/:num', async (req: Request, res: Response) => {
+	const offset = req.params.num || 0
+	const rand = await query<{id: string}[]>(`SELECT id FROM items ORDER BY date_added DESC LIMIT 1 OFFSET ${offset}`)
 	if (!rand[0]) {
 		res.send(';(')
 		return

@@ -70,7 +70,7 @@ export type Listing = {
 // Row from db after massaging data
 export type TradeListing = {
 	id: string
-	listing: Listing
+	listing: Listing | null
 	item: Item
 	has_image: boolean
 	messaged_at : null | Date
@@ -79,7 +79,7 @@ export type TradeListing = {
 export type TradeQuery = any
 
 // Row from db, raw
-export type TradeListingRow = {
+export type ItemRow = {
 	id: string
 	date_added: string
 	item_json: string
@@ -87,4 +87,10 @@ export type TradeListingRow = {
 	name: string
 	has_image: boolean
 	messaged_at: null | string
+}
+
+export type GuildStashTab = {
+	i: number,
+	n: string
+	type: string | 'PremiumStash' | 'QuadStash' | 'UniqueStash'
 }

@@ -6,8 +6,10 @@
   "author": "Colin Kierans <vindexus@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "fetch": "tsnd fetcher/fetch",
-    "migrate": "tsx db/migrate.ts",
+    "fetch-trade": "tsnd fetcher/fetch",
+    "fetch-guild": "tsnd fetcher/fetch-guild",
+    "reset-db": "tsx db/reset-db.ts",
+    "mark-dont-send": "tsx fetcher/dont-send.ts",
     "images": "tsx images/generate.ts",
     "discord": "tsx discord/bot.ts",
     "dev": "tsnd --respawn --debounce 750 --max-old-space-size=8196 --watch .env,src express/index.ts"
@@ -19,7 +21,7 @@
     "express": "^4.19.2",
     "puppeteer": "^22.6.4",
     "sqlite3": "^5.1.7",
-    "ts-node-dev": "https://github.com/sharewares/ts-node-dev",
+    "ts-node-dev": "https://github.com/Vindexus/ts-node-dev",
     "tsx": "^4.7.2"
   },
   "devDependencies": {

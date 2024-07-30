@@ -2,27 +2,28 @@ import {run, wait} from "../lib/helpers";
 import {getListings} from "./trade-api";
 import config from "../config";
 import {TradeQuery} from "../types/types";
-import {getTradeListingRow, insertTradeListing, query} from '../db/db'
+import {getItemRow, insertTradeListing} from '../db/db'
 
 async function findAndInsertNew () {
 	console.log('Try to find some new listings')
-	/*const tradeQuery : TradeQuery = {
-		"query":{
-			"status":{
-				"option":"any"
+
+	const tq: TradeQuery = {
+		"query": {
+			"status": {
+				"option": "any"
 			},
-			"stats":[{"type":"and","filters":[]}]
+			"stats": [
+				{
+					"type": "and",
+					"filters": [],
+					"disabled": false
+				}
+			]
 		},
-		"sort":{"indexed":"desc"}
-	}*/
-
-	const tq : TradeQuery = {"query":{"status":{"option":"any"},"stats":[{"type":"and","filters":[],"disabled":false}]},"sort":{"indexed":"desc"}}
-
-	const maxResult = await query<{max: string}[]>(`SELECT MAX(date_added) as max FROM items`)
-	console.log('maxResult', maxResult)
-	const maxDate = (maxResult.length && maxResult[0]!.max) ? new Date(maxResult[0]!.max) : new Date(0);
-
-	console.log('maxDate', maxDate)
+		"sort": {
+			"indexed": "desc"
+		}
+	};
 
 	let {items, nextPage} = await getListings(config.LEAGUE, tq)
 
@@ -31,7 +32,7 @@ async function findAndInsertNew () {
 	do {
 		for (let [idx, listing] of items.entries()) {
 			console.log('Check out this trade listing', listing.id, listing.item.name)
-			const row = await getTradeListingRow(listing.id)
+			const row = await getItemRow(listing.item.id)
 			if (row) {
 				foundExisting = true
 				console.log('We already have this in the db')
@@ -56,7 +57,7 @@ async function findAndInsertNew () {
 run(async () => {
 	while (true) {
 		await findAndInsertNew()
-		console.log('Wait 30s...')
-		await wait(30000)
+		console.log('Wait ' + config.FETCH_ITEMS_DELAY_MS + 'ms...')
+		await wait(config.FETCH_ITEMS_DELAY_MS)
 	}
 })

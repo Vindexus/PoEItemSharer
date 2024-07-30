@@ -1,14 +1,12 @@
-import { Client, Events, GatewayIntentBits, AttachmentBuilder, ButtonStyle, ButtonBuilder, ActionRowBuilder } from 'discord.js';
+import {AttachmentBuilder, ButtonStyle, Client, Events, GatewayIntentBits} from 'discord.js';
+import config from '../config'
+import {TradeListing} from "../types/types";
+import {getTradeListingImagePath, wait} from "../lib/helpers";
+import {getItemsToMessage, query} from "../db/db";
+
 
 // Create a new client instance
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
-
-import config from '../config'
-import {TradeListing} from "../types/types";
-import {wait} from "../lib/helpers";
-import {getUnsentTradeListings, query} from "../db/db";
-import path from 'path'
-
 
 // When the client is ready, run this code (only once).
 // The distinction between `client: Client<boolean>` and `readyClient: Client<true>` is important for TypeScript developers.
@@ -23,12 +21,11 @@ client.once(Events.ClientReady, async (readyClient: Client) => {
 	async function sendItem (listing: TradeListing, channelId: string) {
 		const message = await readyClient.channels.cache.get(channelId).send({
 			files: [
-				new AttachmentBuilder(path.join(__dirname, '..', 'express', 'public', 'images', 'items', listing.id + '.png'), {
+				new AttachmentBuilder(getTradeListingImagePath(listing), {
 					name: 'item-' + listing.id + '.png',
 				})
 			]
 		})
-		message.react('👍')
 	}
 
 
@@ -42,26 +39,28 @@ client.once(Events.ClientReady, async (readyClient: Client) => {
 	let num = 0
 	while (true) {
 		num++
-		const listings = await getUnsentTradeListings()
-		console.log(`Found ${listings.length} listings to post to ${channelsToMessage.length} channels`)
-		if (listings.length > 0) {
+		const items = await getItemsToMessage()
+		console.log(`Found ${items.length} listings to post to ${channelsToMessage.length} channels`)
+		if (items.length > 0) {
 			let numSentInThisBatch = 0
 			let maxPerBatch = 5
-			for (let listing of listings) {
-				console.log(`Sending ${listing.id} to channels`)
+			for (let itemRow of items) {
+				console.log(`Sending ${itemRow.id} to channels`)
 				if (numSentInThisBatch > maxPerBatch) {
 					console.log('Sent too many so far, taking a break')
 					break
 				}
 				await Promise.all(channelsToMessage.map((cid) => {
 					numSentInThisBatch++
-					return sendItem(listing, cid)
+					return sendItem(itemRow, cid)
 				}))
-				await query(`UPDATE items SET messaged_at = ? WHERE id= ?`, [new Date().toISOString(), listing.id])
+				await query(`UPDATE items SET messaged_at = ? WHERE id= ?`, [new Date().toISOString(), itemRow.id])
+				console.log(`Waiting ${config.DISCORD_MESSAGE_DELAY_MS}ms`)
+				await wait(config.DISCORD_MESSAGE_DELAY_MS)
 			}
 		}
-		console.log('Waiting 10s')
-		await wait(10000)
+		console.log(`Waiting ${config.DISCORD_MESSAGE_DELAY_MS}ms`)
+		await wait(config.DISCORD_MESSAGE_DELAY_MS)
 	}
 });
 
