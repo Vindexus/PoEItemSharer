@@ -2,9 +2,12 @@ import {generateImage, getItemsWithoutImages, run, wait} from "../lib/helpers";
 import puppeteer from 'puppeteer'
 
 const viewPort = { width: 1280, height: 720, deviceScaleFactor: 2 }
-
+const puppeteerLaunchArgs = {
+	headless: true,
+	args: ['--no-sandbox']
+}
 run(async () => {
-	let browser = await puppeteer.launch();
+	let browser = await puppeteer.launch(puppeteerLaunchArgs);
 	let page = await browser.newPage();
 	await page.setViewport(viewPort);
 	const selector = '.listing'
@@ -24,7 +27,7 @@ run(async () => {
 		const items = await getItemsWithoutImages()
 		console.log(`Found ${items.length} items in need of images`)
 		if (items.length) {
-			browser = await puppeteer.launch();
+			browser = await puppeteer.launch(puppeteerLaunchArgs);
 			page = await browser.newPage();
 			await page.setViewport(viewPort);
 			for (let i = 0; i < items.length; i++) {
