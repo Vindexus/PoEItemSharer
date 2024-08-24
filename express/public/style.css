@@ -54,7 +54,8 @@ table {
 
 
 body {
-    background: black;
+	background: black;
+	color: #eee;
 }
 
 div.listing {

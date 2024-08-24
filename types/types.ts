@@ -24,6 +24,10 @@ export type Item = {
 	tangled?: boolean
 	veiledMods?: string[]
 
+	// Position in stash
+	x?: number
+	y?: number
+
 }
 
 type Socket = {
@@ -68,12 +72,16 @@ export type Listing = {
 }
 
 // Row from db after massaging data
-export type TradeListing = {
+export type ItemInfo = {
 	id: string
+	name: string
 	listing: Listing | null
 	item: Item
 	has_image: boolean
 	messaged_at : null | Date
+	stash_tab_name: null | string
+	stash_tab_pos: null | string
+	dont_message: boolean
 }
 
 export type TradeQuery = any
@@ -87,6 +95,9 @@ export type ItemRow = {
 	name: string
 	has_image: boolean
 	messaged_at: null | string
+	dont_message: boolean
+	stash_tab_name: null | string
+	stash_tab_pos: null | string
 }
 
 export type GuildStashTab = {

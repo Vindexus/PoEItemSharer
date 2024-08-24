@@ -1,6 +1,6 @@
 import axios from 'axios'
 import config from '../config'
-import {GuildStashTab, Item, TradeListing, TradeQuery} from "../types/types";
+import {GuildStashTab, Item, ItemInfo, TradeQuery} from "../types/types";
 
 const api = axios.create({
 	baseURL: 'https://www.pathofexile.com/',
@@ -39,20 +39,20 @@ export async function search (league: string, query: any) : Promise<SearchResult
 }
 
 type FetchResult = {
-	items: TradeListing[],
-	nextPage: () => Promise<TradeListing[]>
+	items: ItemInfo[],
+	nextPage: () => Promise<ItemInfo[]>
 }
 export async function fetch (query: string, results: string[]) : Promise<FetchResult> {
 	let perPage = 10
 	let start = 0
-	async function nextPage () : Promise<TradeListing[]> {
+	async function nextPage () : Promise<ItemInfo[]> {
 		const items = results.slice(start, start + perPage - 1)
 		if (items.length === 0) {
 			return []
 		}
 		const res = await api.get('/api/trade/fetch/' + items.join(',') + '?query=' + query)
 		start += perPage
-		return res.data.result as TradeListing[]
+		return res.data.result as ItemInfo[]
 	}
 
 	return {

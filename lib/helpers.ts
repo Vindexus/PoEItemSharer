@@ -2,16 +2,22 @@ import path from 'path'
 import {query} from '../db/db'
 import config from "../config";
 import {Page} from 'puppeteer';
-import {TradeListing} from "../types/types";
+import {ItemInfo} from "../types/types";
 
 const ITEMS_IMAGE_DIR = path.join(__dirname, '..', 'express', 'public', 'images', 'items')
 
 
 export function run (fn: Function) {
-	fn()
+	try {
+		fn()
+	}
+	catch (ex) {
+		console.log('ex', ex)
+		process.exit(1)
+	}
 }
 
-export function getTradeListingImagePath (listing: TradeListing) : string {
+export function getTradeListingImagePath (listing: ItemInfo) : string {
 	return getTradeListingImagePathFromId(listing.id)
 }
 

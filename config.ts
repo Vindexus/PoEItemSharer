@@ -51,6 +51,9 @@ export type Config = {
 	FETCH_GUILD_STASH_TAB_NAMES: string[]
 	FETCH_GUILD_REALM: 'pc'
 
+	// Some items have no name field, like Omens or consumables.
+	SKIP_NAMELESS_ITEMS: boolean
+
 
 	// How long between iterations of the code that checks for new images to share
 	// to discord
@@ -237,6 +240,8 @@ export function getConfigFromSource (source: Record<string, string>) : Config {
 		FETCH_GUILD_STASH_DELAY_MS: loadDelayMS('FETCH_GUILD_STASH_DELAY_MS', 15000),
 		FETCH_GUILD_STASH_DELAY_INCREMENT_MS: loadDelayMS('FETCH_GUILD_STASH_DELAY_INCREMENT_MS', 5000),
 		FETCH_GUILD_STASH_DELAY_MAX_MS: loadDelayMS('FETCH_GUILD_STASH_DELAY_INCREMENT_MS', 1000 * 60 * 30),
+
+		SKIP_NAMELESS_ITEMS: loadBoolean('SKIP_NAMELESS_ITEMS', {requiredInDev: true}),
 	}
 
 	if (cfg.FETCH_GUILD_STASH_TAB_NAMES.length === 0) {

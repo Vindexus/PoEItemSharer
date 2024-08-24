@@ -105,16 +105,16 @@ app.get('/items', newHandler(async (req: Request, res: Response) => {
 
 app.get("/item/:itemId", newHandler(async (req: Request, res: Response) => {
 	const itemId = req.params.itemId
-	const listing = await getItem(itemId)
-	console.log('listing', inspect(listing, {showHidden: false, depth: null, colors: true}))
+	const itemInfo = await getItem(itemId)
+	console.log('listing', inspect(itemInfo, {showHidden: false, depth: null, colors: true}))
 
-	if (!listing) {
+	if (!itemInfo) {
 		res.status(404).send(`Could not find with item ${itemId}`)
 		return
 	}
 
 
-	const item = listing.item
+	const item = itemInfo.item
 	const classes : string[] = []
 
 	function addModSection (mods: undefined | string[], className = '') {
@@ -394,17 +394,22 @@ app.get("/item/:itemId", newHandler(async (req: Request, res: Response) => {
 					${sections.join('<div class="separator"></div>').split('+').join('<strong>+</strong>')}
 				</main>
 			</div>
-			${listing.listing && listing.listing.account ? `
+			${itemInfo.listing && itemInfo.listing.account ? `
 				<div class="posted-by">
-					Posted by <span class="account-name">${listing.listing?.account?.name}</span> @ ${new Date(listing.listing?.indexed || Date.now()).toISOString()}
+					Posted by <span class="account-name">${itemInfo.listing?.account?.name}</span> @ ${new Date(itemInfo.listing?.indexed || Date.now()).toISOString()}
 				</div>
 			` : ''}
     </div>
     
     <div class="actions">
-			<a href="/random">random item</a>
-			${listing.messaged_at ? `<a href="/images/items/${listing.id}.png">view image</a>` : '[no image]'}    
-		</div>` + FOOTER
+			<a href="/random">random item</a>			    
+			<ul>
+				<li>${itemInfo.has_image ? `<a href="/images/items/${itemInfo.id}.png">view image</a>` : '[no image]'}</li>
+				<li>${itemInfo.stash_tab_name ? `In tab ${itemInfo.stash_tab_name} [${itemInfo.stash_tab_pos}]` : '[no tab]'}</li>
+			</ul>
+		</div>
+
+` + FOOTER
 	res.send(html)
 }));
 
@@ -440,4 +445,10 @@ app.listen(port, async () => {
 	if (items[0]) {
 		console.log(items[0])
 	}
+});
+
+process.on('SIGINT', function() {
+	console.log( "\nGracefully shutting down from SIGINT (Ctrl-C)" );
+	// some other closing procedures go here
+	process.exit(0);
 });

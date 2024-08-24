@@ -1,6 +1,6 @@
 import {Database} from 'sqlite3';
 import config from "../config";
-import {Item, Listing, TradeListing, ItemRow} from "../types/types";
+import {Item, Listing, ItemInfo, ItemRow} from "../types/types";
 
 const db = new Database(config.DATABASE_FILE)
 export default db
@@ -27,7 +27,7 @@ export async function getItemRow (id: string) : Promise<null|ItemRow> {
 }
 
 
-export async function getItemsToMessage () : Promise<TradeListing[]> {
+export async function getItemsToMessage () : Promise<ItemInfo[]> {
 	const rows = await query<ItemRow[]>(`SELECT * FROM items 
          WHERE (messaged_at IS NULL OR messaged_at = 0) 
 				 AND has_image = 1 
@@ -35,40 +35,54 @@ export async function getItemsToMessage () : Promise<TradeListing[]> {
 	if (rows.length === 0) {
 		return []
 	}
-	return rows.map(mapItemRowToListing)
+	return rows.map(mapItemRowToItemInfo)
 }
 
-export async function getItem (id: string) : Promise<null|TradeListing> {
+export async function getItem (id: string) : Promise<null|ItemInfo> {
 	const row = await getItemRow(id)
 	if (!row) {
 		return null
 	}
-	return mapItemRowToListing(row)
+	return mapItemRowToItemInfo(row)
 }
 
-function mapItemRowToListing (row: ItemRow) : TradeListing {
-	const listing : TradeListing = {
+function mapItemRowToItemInfo (row: ItemRow) : ItemInfo {
+	const listing : ItemInfo = {
 		id: row.id,
 		item: JSON.parse(row.item_json),
 		listing: JSON.parse(row.listing_json),
 		has_image: !!row.has_image,
 		messaged_at: row.messaged_at ? new Date(row.messaged_at) : null,
+		stash_tab_name: row.stash_tab_name,
+		stash_tab_pos: row.stash_tab_pos,
+		dont_message: !!row.dont_message,
+		name: row.name,
 	}
 	listing.item.extended = listing.item.extended || null
 	return listing
 }
 
-export async function insertTradeListing (data: TradeListing) {
-	return insertItem(data.item, data.listing)
+export async function insertTradeListing (data: ItemInfo) {
+	return insertItem(data.item, {
+		listing: data.listing
+	})
 }
-export async function insertItem (item: Item, listing?: Listing) {
-	await query(`INSERT INTO items (id, name, date_added, item_json, listing_json, has_image)
-VALUES (?, ?, ?, ?, ?, false)`, [
+
+type InsertExtra = {
+	stash_tab_name?: string
+	stash_tab_pos?: string
+	listing?: Listing
+}
+export async function insertItem (item: Item, extra: InsertExtra = {}) {
+	await query(`INSERT INTO items (id, name, date_added, item_json, listing_json, has_image, stash_tab_name, stash_tab_pos)
+VALUES (?, ?, ?, ?, ?, false, ?, ?)`, [
 		item.id,
 		item.name || 'unnamed',
 		new Date().toISOString(),
 		JSON.stringify(item),
-		JSON.stringify(listing ? listing : null)
+		JSON.stringify(extra.listing ? extra.listing : null),
+		extra.stash_tab_name || null,
+		extra.stash_tab_pos || null,
 	])
 }
 
@@ -79,4 +93,26 @@ export async function insertItemIfNotExists (item: Item) : Promise<'skipped'|'in
 	}
 	await insertItem(item)
 	return 'inserted'
+}
+
+export async function upsertGuildStashItem (item: Item, stashName: string, position: string) {
+	const row = await getItemRow(item.id)
+	if (row) {
+		if (row.stash_tab_name === stashName && row.stash_tab_pos === position) {
+			return 'skipped'
+		}
+		await query(`UPDATE items SET stash_tab_name = ?, stash_tab_pos = ? WHERE id = ?`, [
+			stashName,
+			position,
+			item.id,
+		])
+		return 'updated'
+	}
+	else {
+		await insertItem(item, {
+			stash_tab_name: stashName,
+			stash_tab_pos: position,
+		})
+		return 'inserted'
+	}
 }
