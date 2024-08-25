@@ -27,18 +27,26 @@ run(async () => {
 		const items = await getItemsWithoutImages()
 		console.log(`Found ${items.length} items in need of images`)
 		if (items.length) {
-			browser = await puppeteer.launch(puppeteerLaunchArgs);
-			page = await browser.newPage();
-			await page.setViewport(viewPort);
-			for (let i = 0; i < items.length; i++) {
-				const item = items[i]!
-				if (item.has_image && !process.argv[2]) {
-					console.log('Has an image already, skip it')
-					continue
+			try {
+				browser = await puppeteer.launch(puppeteerLaunchArgs);
+				page = await browser.newPage();
+				await page.setViewport(viewPort);
+				for (let i = 0; i < items.length; i++) {
+					const item = items[i]!
+					if (item.has_image && !process.argv[2]) {
+						console.log('Has an image already, skip it')
+						continue
+					}
+					await generateImage(item.id, page)
 				}
-				await generateImage(item.id, page)
+				await browser.close()
 			}
-			await browser.close()
+			catch (ex) {
+				console.error('Error generating image', ex)
+				console.log('Closing puppeteer and waiting 8s')
+				await browser.close()
+				await wait(8000)
+			}
 		}
 		console.log('Waiting 5s')
 		await wait(5000)

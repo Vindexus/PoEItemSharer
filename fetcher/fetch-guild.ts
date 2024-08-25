@@ -23,8 +23,18 @@ async function upsertItemsFromTabIndex (tabIndex: number, tabName: string) : Pro
 	let numUpdated = 0
 	let numSkipped = 0
 	for (let item of items) {
+		console.log('----')
+		if (config.SKIP_TYPELINE_REGEX) {
+			const regex = new RegExp(config.SKIP_TYPELINE_REGEX, 'i')
+			if (regex.test(item.typeLine)) {
+				console.log(`Skipping item with typeLine that matches regex ${config.SKIP_TYPELINE_REGEX}`, item.id.substring(0, 10) + '...', JSON.stringify(item).substring(0, 1000))
+				numSkipped++
+				continue
+			}
+		}
+
 		if (!item.name && config.SKIP_NAMELESS_ITEMS) {
-			//console.log(`Skipping item with no name`, item.id.substring(0, 10) + '...', JSON.stringify(item).substring(0, 50))
+			console.log(`Skipping item with no name`, item.id.substring(0, 10) + '...', JSON.stringify(item).substring(0, 1000))
 			numSkipped++
 			continue
 		}
